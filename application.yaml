@@ -5,13 +5,15 @@ metadata:
   namespace: argocd
 spec:
   project: default
+
   source:
-    repoURL: https://github.com/rohitpatil07/argocd-demo.git
+    repoURL: https://gitlab.com/nanuchi/argocd-app-config.git
     targetRevision: HEAD
     path: dev
-  destination:
+  destination: 
     server: https://kubernetes.default.svc
-    namespace: myapplications
+    namespace: myapp
+
   syncPolicy:
     syncOptions:
     - CreateNamespace=true
