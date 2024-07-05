@@ -1,22 +1,37 @@
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: frontend-service
+#   namespace: default
+# spec:
+#   selector:
+#     app: nginx  #this is mapped to metadata labels & selector match labels
+#   type: NodePort
+#   sessionAffinity: None
+#   sessionAffinityConfig:
+#     clientIP:
+#       timeoutSeconds: 10800
+#   ports:
+#   - name: nginx
+#     protocol: TCP
+#     port: 80
+#     targetPort: 80
+#     # If you set the `spec.type` field to `NodePort` and you want a specific port number,
+#     # you can specify a value in the `spec.ports[*].nodePort` field.
+#     #30000 - 32767
+#     nodePort: 30001 
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend-service
-  namespace: default
+  name: nginx-service
 spec:
   selector:
-    app: nginx  #this is mapped to metadata labels & selector match labels
-  type: NodePort
+    app: nginx
+  type: LoadBalancer
   sessionAffinity: None
-  sessionAffinityConfig:
-    clientIP:
-      timeoutSeconds: 10800
   ports:
-  - name: nginx
+  - name: http
     protocol: TCP
     port: 80
     targetPort: 80
-    # If you set the `spec.type` field to `NodePort` and you want a specific port number,
-    # you can specify a value in the `spec.ports[*].nodePort` field.
-    #30000 - 32767
-    nodePort: 30001 
+    nodePort: 30001
