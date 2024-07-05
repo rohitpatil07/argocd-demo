@@ -1,32 +1,166 @@
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: nginx-html
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 1Gi
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: nginx-deployment
+# spec:
+#   replicas: 3
+#   selector:
+#     matchLabels:
+#       app: nginx #change here
+#   template:
+#     metadata:
+#       labels:
+#         app: nginx #change here
+#     spec:
+#       volumes:
+#       - name: html-volume
+#         persistentVolumeClaim:
+#           claimName: nginx-html
+#       initContainers:
+#       - name: init-html
+#         image: busybox
+#         command:
+#           - sh
+#           - -c
+#           - |
+#             MY_POD_IP=$(hostname -i)
+#             cat > /usr/share/nginx/html/index.html <<EOF
+#             <html>
+#             <head>
+#                 <title>Nginx Webserver</title>
+#                 <style>
+#                     body {
+#                         background-color: #6495ED; /* Cornflower Blue - a darker shade */
+#                         color: white;
+#                         font-size: 36px; /* Significantly larger text */
+#                         display: flex;
+#                         justify-content: center;
+#                         align-items: center;
+#                         height: 100vh;
+#                         margin: 0;
+#                         font-family: Arial, sans-serif;
+#                     }
+#                 </style>
+#             </head>
+#             <body>
+#                 <div>This page is delivered from replica at IP: $MY_POD_IP</div>
+#             </body>
+#             </html>
+#             EOF
+#         volumeMounts:
+#         - name: html-volume
+#           mountPath: /usr/share/nginx/html
+#       containers:
+#       - name: nginx
+#         image: nginx
+#         resources:
+#           requests:
+#             cpu: 100m
+#             memory: 100Mi
+#           limits:
+#             cpu: 100m
+#             memory: 100Mi
+#         ports:
+#         - containerPort: 80
+#         volumeMounts:
+#         - name: html-volume
+#           mountPath: /usr/share/nginx/html
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: nginx-service
+#   namespace: default
+# spec:
+#   selector:
+#     app: nginx
+#   type: LoadBalancer
+#   sessionAffinity: None
+#   sessionAffinityConfig:
+#     clientIP:
+#       timeoutSeconds: 10800
+#   ports:
+#   - name: nginx
+#     protocol: TCP
+#     port: 80
+#     targetPort: 80
+#     # If you set the `spec.type` field to `NodePort` and you want a specific port number,
+#     # you can specify a value in the `spec.ports[*].nodePort` field.
+#     nodePort: 30001
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name:  myapp
-  namespace: default
-  labels:
-    app:  myapp
+  name: nginx-deployment
+  annotations:
+    kubernetes.io/change-cause: "Version 1 app deployed"
 spec:
+  replicas: 3
+  revisionHistoryLimit: 2
+  strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
   selector:
     matchLabels:
-      app: myapp
-  replicas: 1
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
+      app: nginx
   template:
     metadata:
       labels:
-        app:  myapp
+        app: nginx
     spec:
-      # initContainers:
-        # Init containers are exactly like regular containers, except:
-          # - Init containers always run to completion.
-          # - Each init container must complete successfully before the next one starts.
+      volumes:
+      - name: html-volume
+        emptyDir: {}
+      initContainers:
+      - name: init-html
+        image: busybox
+        command:
+          - sh
+          - -c
+          - |
+            MY_POD_IP=$(hostname -i)
+            cat > /usr/share/nginx/html/index.html <<EOF
+            <html>
+            <head>
+                <title>Nginx Webserver</title>
+                <style>
+                    body {
+                        background-color: #6495ED; /* Cornflower Blue - a darker shade */
+                        color: white;
+                        font-size: 36px; /* Significantly larger text */
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        margin: 0;
+                        font-family: Arial, sans-serif;
+                    }
+                </style>
+            </head>
+            <body>
+                <div>This page is delivered from replica at IP: $MY_POD_IP v1</div>
+            </body>
+            </html>
+            EOF
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html
       containers:
-      - name:  frontend
-        image:  nginx
+      - name: nginx
+        image: nginx
         resources:
           requests:
             cpu: 100m
@@ -34,39 +168,30 @@ spec:
           limits:
             cpu: 100m
             memory: 100Mi
-        env:
-        - name: MY_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        command: ["/bin/sh", "-c"]
-        args:
-        - |
-          cat > /usr/share/nginx/html/index.html << EOF
-          <html>
-          <head>
-              <title>Nginx Webserver</title>
-              <style>
-                  body {
-                      background-color: #6495ED; /* Cornflower Blue - a darker shade */
-                      color: white;
-                      font-size: 36px; /* Significantly larger text */
-                      display: flex;
-                      justify-content: center;
-                      align-items: center;
-                      height: 100vh;
-                      margin: 0;
-                      font-family: Arial, sans-serif;
-                  }
-              </style>
-          </head>
-          <body>
-              <div>This page is deliver from replica at ip : $MY_POD_IP</div>
-          </body>
-          </html>
-          EOF
-          nginx -g 'daemon off;'
         ports:
-        - containerPort:  80
-          name:  frontend
-      restartPolicy: Always
+        - containerPort: 80
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  type: LoadBalancer
+  sessionAffinity: None
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30001  # This is optional if you want to set a specific NodePort
+
+
+
+# For version control
+# kubectl rollout history deployment/app
+# kubectl rollout undo deployment/app --to-revision=2
