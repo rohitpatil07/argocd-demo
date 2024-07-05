@@ -1,26 +1,72 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: myapp-deployment
+  name:  myapp
+  namespace: default
+  labels:
+    app:  myapp
 spec:
   selector:
     matchLabels:
       app: myapp
-  replicas: 2
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
   template:
     metadata:
       labels:
-        app: myapp
+        app:  myapp
     spec:
+      # initContainers:
+        # Init containers are exactly like regular containers, except:
+          # - Init containers always run to completion.
+          # - Each init container must complete successfully before the next one starts.
       containers:
-        - name: myapp
-          image: nginx
-          ports:
-          - containerPort: 80
-          resources:
-            requests:
-              cpu: 100m
-              memory: 100Mi
-            limits:
-              cpu: 100m
-              memory: 100Mi
+      - name:  frontend
+        image:  nginx
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        env:
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cat > /usr/share/nginx/html/index.html << EOF
+          <html>
+          <head>
+              <title>Nginx Webserver</title>
+              <style>
+                  body {
+                      background-color: #6495ED; /* Cornflower Blue - a darker shade */
+                      color: white;
+                      font-size: 36px; /* Significantly larger text */
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      height: 100vh;
+                      margin: 0;
+                      font-family: Arial, sans-serif;
+                  }
+              </style>
+          </head>
+          <body>
+              <div>This page is deliver from replica at ip : $MY_POD_IP</div>
+          </body>
+          </html>
+          EOF
+          nginx -g 'daemon off;'
+        ports:
+        - containerPort:  80
+          name:  frontend
+      restartPolicy: Always
