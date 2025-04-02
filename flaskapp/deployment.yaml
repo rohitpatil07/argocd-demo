@@ -1,26 +1,35 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  creationTimestamp: null
+  name: pythonapp
+  namespace: default
   labels:
     app: pythonapp
-  name: pythonapp
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: pythonapp
-  strategy: {}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: pythonapp
     spec:
       containers:
-      - image: rohitpatil07/myflaskapp:v1.1.5
-        name: myflaskapp
+      - name: myflaskapp
+        image: rohitpatil07/myflaskapp:v1.1.5
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
-        resources: {}
-status: {}
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
