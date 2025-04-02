@@ -1,17 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  creationTimestamp: null
+  name: python-svc
+  namespace: default
   labels:
     app: pythonapp
-  name: python-svc
 spec:
-  ports:
-  - port: 5000
-    protocol: TCP
-    targetPort: 5000
   selector:
     app: pythonapp
-  type: NodePort
-status:
-  loadBalancer: {}
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+    nodePort: 30080  # Specific NodePort
+  type: NodePort  # Exposes service on a specific port on each node
