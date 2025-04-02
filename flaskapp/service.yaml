@@ -12,5 +12,5 @@ spec:
   - protocol: TCP
     port: 5000
     targetPort: 5000
-    nodePort: 30080  # Specific NodePort
+    nodePort: 30081  # Specific NodePort
   type: NodePort  # Exposes service on a specific port on each node
