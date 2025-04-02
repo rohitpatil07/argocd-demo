@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: myflaskapp
-        image: rohitpatil07/myflaskapp:v1.1.5
+        image: rohitpatil07/myflaskapp:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
